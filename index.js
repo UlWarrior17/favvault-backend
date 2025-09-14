@@ -36,7 +36,7 @@ favoriteSchema.set("toJSON", {
 
 const Fav = mongoose.model("Favorite", favoriteSchema);
 
-console.log("⚙️  Connecting to DB");
+console.log("⚙️ Connecting to DB");
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
@@ -52,32 +52,62 @@ app.use(reqLogger);
 
 // Routes
 app.get("/api/favs", async (req, res) => {
-  try {
-    const favs = await Fav.find({});
-    res.json(favs);
-  } catch (error) {
-    next(error);
-  }
+  const favs = await Fav.find({});
+  res.json(favs);
 });
 app.post("/api/favs", async (req, res) => {
-  try {
-    const {
-      title,
-      creator,
-      year,
-      description,
-      category,
-      tags,
-      rating,
-      status,
-      notes,
-    } = req.body;
+  const {
+    title,
+    creator,
+    year,
+    description,
+    category,
+    tags,
+    rating,
+    status,
+    notes,
+  } = req.body;
 
-    if (!title) {
-      return res.status(400).json({ error: "title required" });
-    }
+  if (!title || !creator) {
+    return res.status(400).json({ error: "title and creator  required" });
+  }
 
-    const fav = new Fav({
+  const fav = new Fav({
+    title,
+    creator,
+    year,
+    description,
+    category,
+    tags,
+    rating: parseInt(rating),
+    status,
+    notes,
+  });
+
+  const savedFav = await fav.save();
+  res.status(201).json(savedFav);
+});
+app.delete("/api/favs/:id", async (req, res) => {
+  await Fav.findByIdAndDelete(req.params.id);
+  res.status(204).end();
+});
+
+app.put("/api/favs/:id", async (req, res) => {
+  const {
+    title,
+    creator,
+    year,
+    description,
+    category,
+    tags,
+    rating,
+    status,
+    notes,
+  } = req.body;
+
+  const updatedFav = await Fav.findByIdAndUpdate(
+    req.params.id,
+    {
       title,
       creator,
       year,
@@ -87,61 +117,15 @@ app.post("/api/favs", async (req, res) => {
       rating: parseInt(rating),
       status,
       notes,
-    });
+    },
+    { new: true, runValidators: true }
+  );
 
-    const savedFav = await fav.save();
-    res.status(201).json(savedFav);
-  } catch (error) {
-    next(error);
+  if (!updatedFav) {
+    return res.status(404).json({ error: "Favorite not found" });
   }
-});
-app.delete("/api/favs/:id", async (req, res) => {
-  try {
-    await Fav.findByIdAndDelete(req.params.id);
-    res.status(204).end();
-  } catch (error) {
-    next(error);
-  }
-});
 
-app.put("/api/favs/:id", async (req, res) => {
-  try {
-    const {
-      title,
-      creator,
-      year,
-      description,
-      category,
-      tags,
-      rating,
-      status,
-      notes,
-    } = req.body;
-
-    const updatedFav = await Fav.findByIdAndUpdate(
-      req.params.id,
-      {
-        title,
-        creator,
-        year,
-        description,
-        category,
-        tags,
-        rating: parseInt(rating),
-        status,
-        notes,
-      },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedFav) {
-      return res.status(404).json({ error: "Favorite not found" });
-    }
-
-    res.json(updatedFav);
-  } catch (error) {
-    next(error);
-  }
+  res.json(updatedFav);
 });
 
 app.use((error, req, res, next) => {
