@@ -72,6 +72,11 @@ app.post("/api/favs", async (req, res) => {
     return res.status(400).json({ error: "title and creator  required" });
   }
 
+  const existing = await Fav.findOne(title);
+  if (existing) {
+    return res.status(400).json({ error: "existing data" });
+  }
+
   const fav = new Fav({
     title,
     creator,
