@@ -7,22 +7,24 @@ const app = express();
 const reqLogger = (req, res, next) => {
   console.log("Method:", req.method);
   console.log("Path:  ", req.path);
-  console.log('Body:  ', req.body || {})
+  console.log("Body:  ", req.body || {});
   next();
 };
 
-
-const favoriteSchema = new mongoose.Schema({
-  title: { type: String, required: true, minlength: 3 },
-  creator: { type: String, minlength: 3 },
-  year: String,
-  description: String,
-  category: { type: String, required: true },
-  tags: [{ type: String }],
-  rating: Number,
-  status: String,
-  notes: String,
-}, {timestamps: true});
+const favoriteSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true, minlength: 3 },
+    creator: { type: String, minlength: 3 },
+    year: String,
+    description: String,
+    category: { type: String, required: true },
+    tags: [{ type: String }],
+    rating: Number,
+    status: String,
+    notes: String,
+  },
+  { timestamps: true }
+);
 
 favoriteSchema.set("toJSON", {
   transform: (document, returnedObject) => {
@@ -34,8 +36,7 @@ favoriteSchema.set("toJSON", {
 
 const Fav = mongoose.model("Favorite", favoriteSchema);
 
-
-console.log("Connecting to", process.env.MONGODB_URI);
+console.log("⚙️  Connecting to DB");
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
@@ -45,11 +46,9 @@ mongoose
     console.error("❌ MongoDB connection error:", error.message);
   });
 
-
 app.use(express.json());
 app.use(express.static("dist"));
 app.use(reqLogger);
-
 
 // Routes
 app.get("/api/favs", async (req, res) => {
@@ -118,7 +117,7 @@ app.put("/api/favs/:id", async (req, res) => {
       status,
       notes,
     } = req.body;
-    
+
     const updatedFav = await Fav.findByIdAndUpdate(
       req.params.id,
       {
@@ -156,7 +155,6 @@ app.use((error, req, res, next) => {
 
   res.status(500).json({ error: "Something went wrong" });
 });
-
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
